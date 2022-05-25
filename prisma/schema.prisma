@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SimpleProjects {
+  id Int @id @default(autoincrement())
+
+  slug        String
+  title       String
+  otherTitles String[]
+  description String     @db.VarChar(2000)
+  tags        Tags[]     @relation(references: [id])
+  image       String     @db.VarChar(2000)
+  banner      String     @db.VarChar(2000)
+  demographc  Monographc
+
+  author   String
+  artist   String
+  released DateTime
+
+  favorites Lists[] @relation("favorites", references: [id])
+  readings  Lists[] @relation("readings", references: [id])
+  readed    Lists[] @relation("readed", references: [id])
+  toReads   Lists[] @relation("toReads", references: [id])
+  hiatus    Lists[] @relation("hiatus", references: [id])
+  dropped   Lists[] @relation("dropped", references: [id])
+
+  votes    ProjectsVotes[]
+  chapters Chapters[]
+  comments ProjectsComments[]
+}
+
+model ProjectsComments {
+  id        Int             @id @default(autoincrement())
+  projectId Int
+  project   SimpleProjects  @relation(fields: [projectId], references: [id])
+  comment   String          @db.VarChar(2000)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  votes     CommentsVotes[]
+  date      DateTime        @default(now())
+}
+
+model Chapters {
+  id              Int               @id @default(autoincrement())
+  name            String?
+  images          ChapterImage[]
+  number          Float
+  volume          Int?
+  date            DateTime          @default(now())
+  projectId       Int
+  project         SimpleProjects    @relation(fields: [projectId], references: [id])
+  chapterVotes    ChapterVotes[]
+  ChapterComments ChapterComments[]
+}
+
+model ChapterImage {
+  id        Int      @id @default(autoincrement())
+  chapterId Int
+  chapter   Chapters @relation(fields: [chapterId], references: [id])
+  key       String
+  date      DateTime @default(now())
+  url       String
+}
+
+model ChapterComments {
+  id            Int             @id @default(autoincrement())
+  chapterId     Int
+  chapter       Chapters        @relation(fields: [chapterId], references: [id])
+  date          DateTime        @default(now())
+  comment       String          @db.VarChar(2000)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  CommentsVotes CommentsVotes[]
+}
+
+model CommentsVotes {
+  id                 Int               @id @default(autoincrement())
+  commentId          Int
+  comment            ChapterComments   @relation(fields: [commentId], references: [id])
+  date               DateTime          @default(now())
+  vote               Int
+  userId             String
+  user               User              @relation(fields: [userId], references: [id])
+  ProjectsComments   ProjectsComments? @relation(fields: [projectsCommentsId], references: [id])
+  projectsCommentsId Int?
+}
+
+model ChapterVotes {
+  id        Int      @id @default(autoincrement())
+  chapterId Int
+  date      DateTime @default(now())
+  chapter   Chapters @relation(fields: [chapterId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  vote      VoteType
+}
+
+model ProjectsVotes {
+  id        Int            @id @default(autoincrement())
+  date      DateTime       @default(now())
+  projectId Int
+  project   SimpleProjects @relation(fields: [projectId], references: [id])
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  vote      VoteType
+}
+
+model Tags {
+  id       Int              @id @default(autoincrement())
+  name     String           @unique
+  slug     String           @unique
+  projects SimpleProjects[] @relation(references: [id])
+}
+
+enum VoteType {
+  UP
+  DOWN
+}
+
+enum Monographc {
+  MANGA
+  MANHWA
+  MANHUA
+  VISUAL_NOVEL
+  LIGHT_NOVEL
+  CARTOON
+  WEBTOON
+  WEBCOMIC
+  COMIC
+}
+
+// ->> USUÁRIO <<- //
+model User {
+  uid              String             @id @default(uuid()) // ID do usuário no Postgres
+  id               String             @unique // Discord ID
+  email            String             @unique
+  passwd           String?
+  recovery         String?
+  accessToken      String?
+  refreshToken     String?
+  name             String // Username
+  avatar           String // Avatar URL
+  banner           String // Banner URL
+  bio              String             @default("Eu sou preguiçoso a ponto de não trocar minha Bio.") @db.VarChar(400) // Bio
+  accountCreated   DateTime           @default(now()) // Data de criação do usuário no site
+  lastSeen         DateTime           @default(now()) // Data da última vez que o usuário acessou o site
+  stats            Stats? // Stats do usuário, como views, likes, etc.
+  Lists            Lists? // Listas do usuário (favoritos, etc.)
+  projectsVotes    ProjectsVotes[]
+  ChapterVotes     ChapterVotes[]
+  ChapterComments  ChapterComments[]
+  CommentsVotes    CommentsVotes[]
+  ProjectsComments ProjectsComments[]
+}
+
+// ->> Stats dos Usuários <<- //
+model Stats {
+  id    String @id // ID do usuário
+  views Int    @default(0) // Quantidade de views do usuário
+  coins Int    @default(0) // Quantidade de coins do usuário
+  user  User   @relation(fields: [id], references: [id]) // Relação com o usuário
+}
+
+// ->> Listas dos Usuários <<- //
+model Lists {
+  id        String           @id // ID da lista
+  favorites SimpleProjects[] @relation(name: "favorites", references: [id]) // Favoritos
+  readings  SimpleProjects[] @relation(name: "readings", references: [id]) // Lendo
+  readed    SimpleProjects[] @relation(name: "readed", references: [id]) // Lidos
+  toReads   SimpleProjects[] @relation(name: "toReads", references: [id]) // Para Ler
+  hiatus    SimpleProjects[] @relation(name: "hiatus", references: [id]) // Pausado
+  dropped   SimpleProjects[] @relation(name: "dropped", references: [id]) // Dropados
+  user      User             @relation(fields: [id], references: [id]) // Relação com o usuário
+}
