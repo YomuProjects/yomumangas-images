@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { existsSync, rmdirSync, rmSync } from "fs";
+import sizeOf from "image-size";
 import multer from "multer";
 import path from "path";
 import multerConfig from "../controller/multer";
@@ -22,11 +23,15 @@ router.post("/", multer(multerConfig).single("file"), async (req, res) => {
     const chapterId = req.params.chapterId;
     const isDefault = req.query.default === "true";
 
+    const image = sizeOf(file.path);
+
     const data = {
         message: "image uploaded successfully",
         file: file.filename,
         size: file.size,
-        url: `https://images.yomumangas.com/${mangaId}/${isDefault ? file.filename : `${chapterId}/${file.filename}`}`
+        url: `https://images.yomumangas.com/${mangaId}/${isDefault ? file.filename : `${chapterId}/${file.filename}`}`,
+        width: image.width,
+        height: image.height
     }
 
     return res.status(200).json(data);
