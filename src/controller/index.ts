@@ -8,7 +8,6 @@ import log from "../functions/log";
 import configuration from "./configuration";
 
 
-/* ->> Definindo Consts <<- */
 const app = express();
 const routes = readdirSync("src/routes");
 

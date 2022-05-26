@@ -1,4 +1,5 @@
 import Express from "express";
+import { existsSync, mkdirSync } from "fs";
 import morgan from "morgan";
 import path from "path";
 import log from "../functions/log";
@@ -10,8 +11,12 @@ export default function ({ app, routes }: Configuration) {
     app.use(Express.urlencoded({ extended: true }));
     app.use(morgan("dev"));
 
-    /* ->> Ativando Middleware <<- */
-    app.use('/', Express.static(path.resolve(__dirname, "..", "..", "tmp", "uploads")));
+    /* ->> Verificando se a rota de imagens existe <<- */
+    if (!existsSync(path.resolve(__dirname, "..", "..", "images")))
+        mkdirSync(path.resolve(__dirname, "..", "..", "images"));
+
+    /* ->> Ativando o servidor de imagens <<- */
+    app.use("/", Express.static(path.resolve(__dirname, "..", "..", "images")));
 
     /* ->> Ativando as demais rotas <<- */
     routes.map((rawRoute) => {
