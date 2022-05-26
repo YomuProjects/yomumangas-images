@@ -1,5 +1,6 @@
-node_modules
-tmp
+node_modules/
+tmp/
+images/
 .env
 *.lock
 *-lock.json
