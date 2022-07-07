@@ -1,5 +1,6 @@
 import cors from "cors";
 import Express from "express";
+import cache from "express-aggressive-cache";
 import { existsSync, mkdirSync } from "fs";
 import morgan from "morgan";
 import path from "path";
@@ -26,7 +27,7 @@ export default function ({ app, routes }: Configuration) {
         if (!existsSync(routePath))
             mkdirSync(routePath);
 
-        app.use(route, Express.static(routePath));
+        app.use(route, cache().middleware, Express.static(routePath));
     });
 
     /* ->> Ativando as demais rotas <<- */
