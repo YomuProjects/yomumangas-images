@@ -1,7 +1,8 @@
 import { cyan, green, magenta, red, yellow } from "colors";
 
+console.log("\n\n");
 console.log(green(`[${magenta("!")}] ${"=".repeat(60)} [${magenta("!")}]`));
-console.log(green(`[${magenta("!")}] ${" ".repeat(22) + cyan("YomuMangás - API") + " ".repeat(22)} [${magenta("!")}]`));
+console.log(green(`[${magenta("!")}] ${" ".repeat(22) + cyan("YomuMangás - IMG") + " ".repeat(22)} [${magenta("!")}]`));
 console.log(green(`[${magenta("!")}] ${"=".repeat(60)} [${magenta("!")}]`));
 
 export default function (type: number, message?: string, status?: "OK" | "ERR") {

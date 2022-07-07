@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 router.post("/", multer({
     dest: path.resolve(mainPath),
     storage: diskStorage({
-        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "images")),
+        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "covers")),
         filename: (_req, file, cb) => cb(null, randomBytes(16).toString("hex"))
     }),
     limits: { fileSize: 1024 * 1024 * 10 },
@@ -36,12 +36,12 @@ router.post("/", multer({
             message: "image uploaded successfully",
             file: file.filename,
             size: file.size,
-            url: `https://images.yomumangas.com/images/${file.filename}`,
+            url: `https://images.yomumangas.com/covers/${file.filename}`,
             width: image.width,
             height: image.height
         }
 
-        create(data.url, data.file, data.size, data.width, data.height, username, data.url, "Imagem criada!");
+        create(data.url, data.file, data.size, data.width, data.height, username, data.url, "Cover criado!");
 
         return res.status(200).json(data);
     } catch (err) {
@@ -55,11 +55,11 @@ router.delete("/", async (req, res) => {
 
         if (!key) return res.status(401).json({ message: "No key provided." });
 
-        const filePath = path.join(__dirname, "../../../images/images", key);
+        const filePath = path.join(__dirname, "../../../images/covers", key);
 
         if (!existsSync(filePath)) return res.status(401).json({ message: "File not found." });
 
-        await remove(`https://images.yomumangas.com/images/${key}`, key, "ADMIN", `https://images.yomumangas.com/covers/default-${Math.floor(Math.random() * 20)}`, "Imagem Deletada!");
+        await remove(`https://images.yomumangas.com/covers/${key}`, key, "ADMIN", `https://images.yomumangas.com/covers/default-${Math.floor(Math.random() * 20)}`, "Cover Deletada!");
 
         rmSync(filePath);
 
