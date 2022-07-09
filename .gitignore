@@ -1,6 +1,6 @@
 node_modules/
 tmp/
-images/
+data/
 .env
 *.lock
 *-lock.json
