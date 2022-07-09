@@ -1,9 +1,9 @@
 import { randomBytes } from "crypto";
 import { Router } from "express";
-import { existsSync, mkdirSync, readdirSync, rmSync } from "fs";
-import sizeOf from "image-size";
+import { existsSync, mkdirSync, readdirSync, rmSync, unlinkSync } from "fs";
 import multer, { diskStorage } from "multer";
 import path from "path";
+import sharp from "sharp";
 import { create, remove } from "../functions/webhook";
 
 const router = Router();
@@ -22,12 +22,12 @@ router.post("/", multer({
 
             if (!chapterId) return cb(new Error("No chapterId provided."), undefined);
 
-            const chapterPath = path.join(mainPath, "chapters", chapterId);
+            const chapterPath = path.join(mainPath, "..", "tmp", "chapters", chapterId);
 
             if (!existsSync(chapterPath)) mkdirSync(chapterPath);
             return cb(null, chapterPath);
         },
-        filename: (_req, file, cb) => cb(null, randomBytes(16).toString("hex"))
+        filename: (_req, file, cb) => cb(null, `${randomBytes(16).toString("hex")}.${file.mimetype.split("/")[1]}`)
     }),
     limits: { fileSize: 1024 * 1024 * 10 },
     fileFilter: (_req, file, cb) => mimetypes.includes(file.mimetype) ? cb(null, true) : cb("Invalid mimetype." as any, false)
@@ -40,13 +40,15 @@ router.post("/", multer({
 
         const username = req.headers["username"] as string ?? "NullUser";
 
-        const image = sizeOf(file.path);
+        const image: sharp.OutputInfo = await sharp(file.path).resize(512).webp().toFile(path.resolve(mainPath, "chapters", chapterId, file.filename.split(".")[0] + ".webp"))
+
+        unlinkSync(file.path);
 
         const data = {
             message: "image uploaded successfully",
             file: file.filename,
             size: file.size,
-            url: `https://images.yomumangas.com/chapters/${chapterId}/${file.filename}`,
+            url: `https://images.yomumangas.com/chapters/${chapterId}/${file.filename.split(".")[0]}.webp`,
             width: image.width,
             height: image.height
         }
@@ -75,7 +77,7 @@ router.delete("/all", async (req, res) => {
 
         const key = readdirSync(filePath)[0];
 
-        await remove(`https://images.yomumangas.com/chapters/${id}/${key}`, key, "ADMIN", `https://images.yomumangas.com/covers/default-${Math.floor(Math.random() * 20)}`, "Capítulo Deletado!");
+        await remove(`https://images.yomumangas.com/chapters/${id}/${key}`, key, "ADMIN", `https://images.yomumangas.com/avatars/default-${Math.floor(Math.random() * 20)}`, "Capítulo Deletado!");
 
         rmSync(filePath);
 

@@ -1,9 +1,9 @@
 import { randomBytes } from "crypto";
 import { Router } from "express";
-import { existsSync, rmSync } from "fs";
-import sizeOf from "image-size";
+import { existsSync, rmSync, unlinkSync } from "fs";
 import multer, { diskStorage } from "multer";
 import path from "path";
+import sharp from "sharp";
 import { create, remove } from "../functions/webhook";
 
 const router = Router();
@@ -17,8 +17,8 @@ router.get("/", async (req, res) => {
 router.post("/", multer({
     dest: path.resolve(mainPath),
     storage: diskStorage({
-        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "covers")),
-        filename: (_req, file, cb) => cb(null, randomBytes(16).toString("hex"))
+        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "..", "tmp", "covers")),
+        filename: (_req, file, cb) => cb(null, `${randomBytes(16).toString("hex")}.${file.mimetype.split("/")[1]}`)
     }),
     limits: { fileSize: 1024 * 1024 * 10 },
     fileFilter: (_req, file, cb) => mimetypes.includes(file.mimetype) ? cb(null, true) : cb("Invalid mimetype." as any, false)
@@ -30,13 +30,15 @@ router.post("/", multer({
 
         const username = req.headers["username"] as string ?? "NullUser";
 
-        const image = sizeOf(file.path);
+        const image: sharp.OutputInfo = await sharp(file.path).resize(512).webp().toFile(path.resolve(mainPath, "covers", file.filename.split(".")[0] + ".webp"))
+
+        unlinkSync(file.path);
 
         const data = {
             message: "image uploaded successfully",
             file: file.filename,
             size: file.size,
-            url: `https://images.yomumangas.com/covers/${file.filename}`,
+            url: `https://images.yomumangas.com/covers/${file.filename.split(".")[0]}.webp`,
             width: image.width,
             height: image.height
         }

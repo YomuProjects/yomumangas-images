@@ -21,6 +21,14 @@ export default function ({ app, routes }: Configuration) {
     const mainPath = path.resolve(__dirname, "..", "..", "data");
     if (!existsSync(mainPath)) mkdirSync(mainPath);
 
+    /* ->> Verificando se a rota de imagens temporárias existe <<- */
+    const tempPath = path.resolve(__dirname, "..", "..", "tmp");
+    if (!existsSync(tempPath)) mkdirSync(tempPath);
+    imagesRoutes.forEach(route => {
+        const routePath = path.join(tempPath, route.replace(/\//g, ""));
+        if (!existsSync(routePath)) mkdirSync(routePath);
+    });
+
     /* ->> Ativando o servidor de imagens <<- */
     imagesRoutes.forEach(route => {
         const routePath = path.resolve(mainPath, route.replace(/\//g, ""));

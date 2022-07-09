@@ -1,9 +1,9 @@
 import { randomBytes } from "crypto";
 import { Router } from "express";
-import { existsSync, rmSync } from "fs";
-import sizeOf from "image-size";
+import { existsSync, rmSync, unlinkSync } from "fs";
 import multer, { diskStorage } from "multer";
 import path from "path";
+import sharp from "sharp";
 import { create, remove } from "../functions/webhook";
 
 const router = Router();
@@ -17,8 +17,8 @@ router.get("/", async (req, res) => {
 router.post("/", multer({
     dest: path.resolve(mainPath),
     storage: diskStorage({
-        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "banners")),
-        filename: (_req, file, cb) => cb(null, randomBytes(16).toString("hex"))
+        destination: (_req, _file, cb) => cb(null, path.resolve(mainPath, "..", "tmp", "banners")),
+        filename: (_req, file, cb) => cb(null, `${randomBytes(16).toString("hex")}.${file.mimetype.split("/")[1]}`)
     }),
     limits: { fileSize: 1024 * 1024 * 10 },
     fileFilter: (_req, file, cb) => mimetypes.includes(file.mimetype) ? cb(null, true) : cb("Invalid mimetype." as any, false)
@@ -30,13 +30,15 @@ router.post("/", multer({
 
         const username = req.headers["username"] as string ?? "NullUser";
 
-        const image = sizeOf(file.path);
+        const image: sharp.OutputInfo = await sharp(file.path).resize(512).webp().toFile(path.resolve(mainPath, "banners", file.filename.split(".")[0] + ".webp"))
+
+        unlinkSync(file.path);
 
         const data = {
             message: "image uploaded successfully",
             file: file.filename,
             size: file.size,
-            url: `https://images.yomumangas.com/banners/${file.filename}`,
+            url: `https://images.yomumangas.com/banners/${file.filename.split(".")[0]}.webp`,
             width: image.width,
             height: image.height
         }
@@ -59,7 +61,7 @@ router.delete("/", async (req, res) => {
 
         if (!existsSync(filePath)) return res.status(401).json({ message: "File not found." });
 
-        await remove(`https://images.yomumangas.com/banners/${key}`, key, "ADMIN", `https://images.yomumangas.com/covers/default-${Math.floor(Math.random() * 20)}`, "Banner Deletado!");
+        await remove(`https://images.yomumangas.com/banners/${key}`, key, "ADMIN", `https://images.yomumangas.com/avatars/default-${Math.floor(Math.random() * 20)}`, "Banner Deletado!");
 
         rmSync(filePath);
 
